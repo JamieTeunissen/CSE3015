@@ -9,11 +9,10 @@ public class Main {
         List<Integer> list = makeRndList(100);
         int maxDif = determineMaxDifference(list);
         System.out.println(maxDif);
-
     }
 
     private static List<Integer> makeRndList(int numberOfItems){
-        Random rd = new Random(); // creating Random object
+        Random rd = new Random();
         List<Integer> resultList = new ArrayList<>();
         for (int i = 0; i < numberOfItems; i++){
             resultList.add(rd.nextInt(100));
@@ -25,12 +24,11 @@ public class Main {
     private static Integer determineMaxDifference(List<Integer> inputList){
         int upperBound = 0;
         int lowerBound = 100;
-        for (int i = 0; i < inputList.size(); i++){
-            int check = inputList.get(i);
-            if (check > upperBound){
+        for (int check : inputList) {
+            if (check > upperBound) {
                 upperBound = check;
             }
-            if (check < lowerBound){
+            if (check < lowerBound) {
                 lowerBound = check;
             }
         }
