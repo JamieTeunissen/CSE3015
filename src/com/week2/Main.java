@@ -1,51 +1,52 @@
 package com.week2;
 
-import java.lang.reflect.Array;
-import java.util.Arrays;
+import java.util.ArrayList;
+
+import static java.util.Arrays.*;
 
 public class Main {
 
     public static void main(String[] args) {
-        int[] input = new int[0];
-        removeLastOccurrence(0, input);
+        ArrayList<Integer> input = new ArrayList<>(asList(1, 1, 3, 5, 7, 1, 5, 9, 1));
+        removeAll(input);
+        System.out.println("Fill");
     }
 
     /**
-     * Takes the array and the last occurring element x,
-     * shifting the rest of the elements left. I.e.
-     * [1, 4, 7, 9], with x=7 would result in:
-     * [1, 4, 9].
+     * Removes all elements from the ArrayList, using the removeLastOccurrence method.
      *
-     * @param x
-     *     the entry to remove from the array
-     * @param arr
-     *     to remove an entry from
-     * @return the updated array, without the last occurrence of x
+     * @param list
+     *     to remove the elements from.
      */
-    public static int[] removeLastOccurrence(int x, int[] arr) {
-        if (arr.length > 0){
-            int[] resultArr = new int[arr.length - 1];
-        }else{
-            return arr;
+    public static void removeAll(ArrayList<Integer> list) {
+        int cycleAmount = list.size();
+        for (int i = 0; i < cycleAmount; i++){
+            removeLastOccurrence(list.get(0), list);
         }
+    }
 
+    /**
+     * Takes an ArrayList and removes last occurrence of x,
+     * shifting the rest of the elements left.
+     * I.e. [5, 1, 5, 9, 8], with x = 5
+     * would result in: [5, 1, 9, 8].
+     * Note that this method does not return a new list.
+     * Instead, the list that is passed as a parameter is changed.
+     *
+     * @param list
+     *     to remove an element from.
+     * @param x
+     *     element value to look for
+     */
+    public static void removeLastOccurrence(int x, ArrayList<Integer> list) {
         int positionLastOccurrence = -1;
-        for (int i = 0; i < arr.length; i++){
-            if (arr[i] == x){
+        for (int i = 0; i < list.size(); i++){
+            if (list.get(i) == x){
                 positionLastOccurrence = i;
             }
         }
         if(positionLastOccurrence >= 0){
-            if (arr.length > 0){
-                int[] resultArr = new int[arr.length - 1];
-                System.arraycopy(arr, 0, resultArr, 0, positionLastOccurrence);
-                System.arraycopy(arr,positionLastOccurrence + 1, resultArr, positionLastOccurrence,(arr.length-1) - positionLastOccurrence);
-                return resultArr;
-            }else{
-                return arr;
-            }
-        }else{
-            return arr;
+            list.remove(positionLastOccurrence);
         }
     }
 
