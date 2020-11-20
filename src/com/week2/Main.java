@@ -2,139 +2,241 @@ package com.week2;
 
 import java.util.*;
 
-class ArrayStack {
-    private Object[] elements;
-    private int size;
-    private int capacity;
+class DLList {
+    class Node {
+        // Each node object has these three fields
+        private Object element;
+        private Node previous;
+        private Node next;
+
+        // Constructor: Creates a Node object with element = e, previous = p and next = n
+        Node(Object e, Node p, Node n) {
+            element = e;
+            previous = p;
+            next = n;
+        }
+
+        // This function gets Object e as input and sets e as the element of the Node
+        public void setElement(Object e) {
+            element = e;
+        }
+
+        // This function returns the element variable of the Node
+        public Object getElement() {
+            return element;
+        }
+
+        // This function gets Node n as input and sets the next variable of the current Node object as n.
+        public void setNext(Node n) {
+            next = n;
+        }
+
+        // This function returns the next Node
+        public Node getNext() {
+            return next;
+        }
+
+        // This function gets Node p as input and sets the previous variable of the current Node object as p.
+        public void setPrevious(Node p) {
+            previous = p;
+        }
+
+        // This function returns the previous Node
+        public Node getPrevious() {
+            return previous;
+        }
+    }
+
+    // Each object in DLList has one field head, which points to the starting Node of DLList.
+    private Node head;
+    // Each object in DLList has one field tail, which points to the final Node of DLList.
+    private Node tail;
 
     /**
-     * Creates an empty ArrayStack with capacity 1.
+     * Constructor: initialises the head and tail fields as null
      */
-    public ArrayStack() {
-        capacity = 1;
-        size = 0;
-        elements = new Object[capacity];
+    public DLList() {
+        head = null;
+        tail = null;
     }
 
     /**
-     * @return The size of this ArrayStack.
+     * @return The element in the head Node of the DLL
+     */
+    public Object getHead() {
+        return head.getElement();
+    }
+
+    /**
+     * @return The element in the tail Node of the DLL
+     */
+    public Object getTail() {
+        return tail.getElement();
+    }
+
+    /**
+     * Adds element e in a new Node to the head of the list.
+     *
+     * @param e
+     *     The element to add.
+     */
+    public void addFirst(Object e) {
+        if(head == null){
+            Node n = new Node(e, null, null);
+            head = n;
+            tail = n;
+        }else{
+            Node n = new Node(e, null, head);
+            head.setPrevious(n);
+            head = n;
+        }
+    }
+
+    /**
+     * Remove the first Node in the list and return its element.
+     *
+     * @return The element of the head Node. If the list is empty, this method returns null.
+     */
+    public Object removeFirst() {
+        if(head == null){
+            return null;
+        }
+        Object tmp = head.getElement();
+        if(head == tail){
+            head = null;
+            tail = null;
+        }else{
+            head = head.getNext();
+            head.setPrevious(null);
+        }
+        return tmp;
+    }
+
+    /**
+     * Adds element e in a new Node to the tail of the list.
+     *
+     * @param e
+     *     The element to add.
+     */
+    public void addLast(Object e) {
+        if(head == null){
+            addFirst(e);
+        }else{
+            Node n = new Node(e, tail, null);
+            tail.setNext(n);
+            tail = n;
+        }
+    }
+
+    /**
+     * Remove the last Node in the list and return its element.
+     *
+     * @return The element of the tail Node. If the list is empty, this method returns null.
+     */
+    public Object removeLast() {
+        if(head == null){
+            return null;
+        }
+        Node prevNode = tail.getPrevious();
+        Object tmp = tail.getElement();
+        if(head == tail){
+            head = null;
+            tail = null;
+        }else{
+            tail = prevNode;
+            tail.setNext(null);
+        }
+        return tmp;
+    }
+
+    /**
+     * @return the number of Nodes in the list
      */
     public int size() {
-        return size;
-    }
-
-    /**
-     * @return `true` iff this ArrayStack is empty, `false` otherwise.
-     */
-    public boolean isEmpty() {
-        return size == 0;
-    }
-
-    /**
-     * @return `true` iff the size is equal to the capacity, `false` otherwise.
-     */
-    public boolean isFull() {
-        return size == capacity;
-    }
-
-    /**
-     * @return the top element of the stack without removing it
-     */
-    public Object peek() throws EmptyStackException {
-        if (isEmpty()){
-            throw new EmptyStackException();
+        if(head == null){
+            return 0;
         }
-        return elements[0];
+        Node obj = head;
+        int iterator = 1;
+        while(obj.getNext() != null){
+            iterator++;
+            obj = obj.getNext();
+        }
+        return iterator;
     }
 
     /**
-     * Adds `o` to the stack.
-     * If capacity of stack was too small, capacity is doubled and `o` is added.
+     * Adds element e in a new Node which is inserted at position pos.
+     * The list is zero indexed, so the first element in the list corresponds to position 0.
+     * This also means that `addAtPosition(0, e)` has the same effect as `addFirst(e)`.
+     * If there is no Node in position pos, this method adds it to the last position.
      *
-     * @param o
-     *     the element to add to the stack.
+     * @param pos
+     *     The position to insert the element at.
+     * @param e
+     *     The element to add.
      */
-    public void push(Object o) {
-        if(isFull()){
-            Object [] backup = new Object[capacity];
-            for(int i = 0; i < capacity; i++){
-                backup[i] = elements[i];
-            }
-            elements = new Object[capacity*2];
-            for(int i = 0; i < capacity; i++){
-                elements[i] = backup[i];
-            }
-            capacity = capacity*2 ;
+    public void addAtPosition(int pos, Object e) {
+        if(pos == 0){
+            addFirst(e);
         }
-        elements[size] = o;
-        size++;
+        Node selNode = head;
+        for(int i = 0; i < pos; i++){
+            selNode = selNode.getNext();
+            if(selNode == null){
+                break;
+            }
+        }
+        if(selNode == null){
+            addLast(e);
+        }else{
+            Node newNode = new Node(e, selNode.getPrevious(), selNode);
+            selNode.getPrevious().setNext(newNode);
+            selNode.setPrevious(newNode);
+        }
     }
 
     /**
-     * Removes the top element from the stack.
-     * If removing top would make the stack use less than 25% of its capacity,
-     * then the capacity is halved.
+     * Remove Node at position pos and return its element.
+     * The list is zero indexed, so the first element in the list corresponds to position 0.
+     * This also means that `removeFromPosition(0)` has the same effect as `removeFirst()`.
      *
-     * @return the element which was at the top of the stack.
-     * @throws EmptyStackException
-     *     iff the stack is empty
+     * @param pos
+     *     The position to remove the Node from.
+     * @return The element of the Node in position pos. If there is no Node in position pos, this method returns null.
      */
-    public Object pop() throws EmptyStackException {
-        if(isEmpty()){
-            throw new EmptyStackException();
-        }
-
-        Object res = peek();
-
-        size--;
-
-        for(int i = 0; i < size; i++){
-            elements[i] = elements[i+1];
-        }
-
-        if(size < capacity/4){
-            if(capacity/2 < 1){
-                elements = new Object[1];
-                capacity = 1;
-            }else{
-                Object [] backup = new Object[capacity/2];
-                for(int i = 0; i < capacity/2; i++){
-                    backup[i] = elements[i];
-                }
-                capacity = capacity/2;
-                elements = new Object[capacity];
-                for(int i = 0; i < capacity; i++){
-                    elements[i] = backup[i];
-                }
+    public Object removeFromPosition(int pos) {
+        Node selNode = head;
+        for(int i = 0; i < pos; i++){
+            selNode = selNode.getNext();
+            if(selNode == null){
+                return null;
             }
         }
-
+        Object res = selNode.getElement();
+        selNode.getPrevious().setNext(null);
         return res;
     }
 
     /**
-     * @return a String representation of the ArrayStack
-     * Example output for ArrayStack with 2 elements and capacity 5:
-     * <ArrayStack[1,2]>(Size=2, Cap=5)
+     * @return A new DLL that contains the elements of the current one in reversed order.
      */
-    public String toString() {
-        StringBuilder s = new StringBuilder();
-        for (int i = 0; i < size-1; i++){
-            s.append(elements[i]).append(',');
+    public DLList reverse() {
+        DLList output = new DLList();
+        Node nodeOrig = head;
+        for (int i = 0; i < size(); i++){
+            output.addFirst(nodeOrig.getElement());
+            nodeOrig = nodeOrig.getNext();
         }
-        s.append(elements[size - 1]);
-        return  "<ArrayStack[" + s + "]>(Size=" + size + ", Cap=" + capacity + ")";
-    }
-
-    // For testing, do not remove or change.
-    public Object[] getElements() {
-        return elements;
+        return output;
     }
 }
 
+
+
 public class Main {
     public static void main(String[] args) {
-        ArrayStack s = new ArrayStack();
-        s.push("324");
+        DLList list = new DLList();
+        DLList reversed = list.reverse();
     }
 }
