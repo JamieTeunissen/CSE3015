@@ -5,29 +5,42 @@ import java.util.*;
 public class Main {
 
     public static void main(String[] args) {
-        int[] tasks = { 8, 1, 8, 5,1,1,6,1,1 };
-        int res = completeTasks(tasks, 4);
+        int[] data = {11, 90, 33, 71, 24, 50, 35, 30, 15, 21};
+        quickSort(data);
 
     }
 
-    public static int completeTasks(int[] durations, int n) {
-        PriorityQueue<Integer> taQueue = new PriorityQueue<Integer>();
-        int i = 0;
-        while(i < durations.length && i < n){
-            taQueue.add(durations[i++]);
+    public static void quickSort(int[] elements) {
+        sort(elements, 0, elements.length - 1);
+    }
+
+    private static void sort(int[] elements, int selLinks, int selRechts){
+        if(selLinks < selRechts){
+            int partitionIndex = partition(elements, selLinks, selRechts);
+
+            sort(elements, selLinks, partitionIndex - 1);
+            sort(elements, partitionIndex + 1, selRechts);
         }
-        while (i < durations.length){
-            int lowTime = taQueue.poll();
-            taQueue.add(lowTime + durations[i++]);
-        }
-        int result = 0;
-        while (!taQueue.isEmpty()){
-            int checkTime =  taQueue.poll();
-            if (checkTime > result){
-                result = checkTime;
+
+    }
+
+    private static int partition(int[] elements, int selLinks, int selRechts){
+        int l = selLinks;
+        int pivot = elements[selRechts];
+
+        for(int i = selLinks; i < selRechts; i++){
+            if(elements[i] < pivot){
+                int buffer = elements[i];
+                elements[i] = elements[l];
+                elements[l] = buffer;
+                l++;
             }
         }
 
-        return result;
+        int temp = elements[l];
+        elements[l] = pivot;
+        elements[selRechts] = temp;
+
+        return l;
     }
 }
