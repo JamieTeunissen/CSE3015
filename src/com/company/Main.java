@@ -2,271 +2,203 @@ package com.company;
 
 import java.util.*;
 
+import static org.junit.Assert.*;
+import org.junit.*;
+
 public class Main {
 
-    interface Vertex extends Comparable<Vertex> {
-        int getId();
-    }
+    class Edge implements Comparable<Edge> {
+        private int from;
+        private int to;
+        private int cost;
 
-    /**
-     * Interface for a generic graph. You may assume that our implementation is an
-     * undirected graph.
-     */
-    interface Graph {
-        /**
-         * Returns the neighbours in a sorted collection by id
-         *
-         * @param v
-         *     node to get the neighbours of.
-         * @return sorted collection of neighbours.
-         */
-        List<Vertex> getNeighbours(Vertex v);
-
-        /**
-         * @return an unsorted collection of all vertices in the graph.
-         */
-        Collection<Vertex> getAllVertices();
-    }
-
-    static class VertexImpl implements Vertex {
-        private int id;
-        private Set<Vertex> neighbours;
-
-        public VertexImpl(int id) {
-            this.id = id;
-            neighbours = new HashSet<>();
+        public Edge(int from, int to, int cost) {
+            this.from = from;
+            this.to = to;
+            this.cost = cost;
         }
 
-        public void addNeighbour(Vertex v) {
-            neighbours.add(v);
+        public int getFrom() {
+            return from;
+        }
+
+        public int getTo() {
+            return to;
+        }
+
+        public int getCost() {
+            return cost;
+        }
+
+        @Override
+        public int compareTo(Edge o) {
+            return Integer.compare(this.cost, o.cost);
         }
 
         @Override
         public String toString() {
-            return "<Node: " + id + ">";
-        }
-
-        @Override
-        public int getId() {
-            return id;
-        }
-
-        public Collection<Vertex> getNeighbours() {
-            return new ArrayList<>(this.neighbours);
-        }
-
-        @Override
-        public int compareTo(Vertex o) {
-            return this.getId() - o.getId();
-        }
-
-        @Override
-        public int hashCode() {
-            return this.getId();
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            return o instanceof Vertex && ((Vertex) o).getId() == this.getId();
+            return "Edge{" +
+                    "from=" + from +
+                    ", to=" + to +
+                    ", cost=" + cost +
+                    '}';
         }
     }
 
-    static class GraphImpl implements Graph {
-        private Map<Integer, Vertex> vertices;
+    static class UnionFind {
 
-        public GraphImpl() {
-            this.vertices = new HashMap<>();
+        private int[] parent;
+
+        private int[] rank;
+
+        // Union Find structure implemented with two arrays for Union by Rank
+        public UnionFind(int size) {
+            parent = new int[size];
+            rank = new int[size];
+            for (int i = 0; i < size; i++) parent[i] = i;
         }
 
-        public void addVertex(Vertex v) {
-            this.vertices.put(v.getId(), v);
+        /**
+         * Merge two clusters, if they are not already part of the same cluster.
+         *
+         * @param i a node in the first cluster
+         * @param j a node in the second cluster
+         * @return true iff i and j had different clusters.
+         */
+        boolean union(int i, int j) {
+            int parent1 = find(i);
+            int parent2 = find(j);
+            if (parent2 == parent1)
+                return false;
+            if (rank[parent1] > rank[parent2]) {
+                parent[parent2] = parent1;
+            } else if (rank[parent2] > rank[parent1]) {
+                parent[parent1] = parent2;
+            } else {
+                parent[parent2] = parent1;
+                rank[parent1]++;
+            }
+            return true;
         }
 
-        @Override
-        public Collection<Vertex> getAllVertices() {
-            return this.vertices.values();
+        /**
+         * NB: this function should also do path compression
+         * @param i index of a node
+         * @return the root of the subtree containg i.
+         */
+        int find(int i) {
+            int parent = this.parent[i];
+            if (i == parent) {
+                return i;
+            }
+            return this.parent[i] = find(parent);
         }
 
-        @Override
-        public List<Vertex> getNeighbours(Vertex v) {
-            List<Vertex> neigh = new ArrayList<>(((VertexImpl) v).getNeighbours());
-            Collections.sort(neigh);
-            return neigh;
+        // Return the rank of the trees
+        public int[] getRank() {
+            return rank;
         }
 
-        public void addEdge(Vertex v, Vertex w) {
-            VertexImpl realV = (VertexImpl) v;
-            VertexImpl realW = (VertexImpl) w;
-            realV.addNeighbour(w);
-            realW.addNeighbour(v);
+        // Return the parent of the trees
+        public int[] getParent() {
+            return parent;
         }
     }
 
     /**
-     * Implements a BFS traversal of the Graph starting at a certain vertex v. It
-     * should return nodes at most once.
-     */
-    static class GraphIterator implements Iterator<Vertex> {
-        private Graph g;
-        private Vertex v;
-        private Queue<Vertex> queue;
-        private Set<Integer> colored;
-
-        public GraphIterator(Graph g, Vertex v) {
-            this.g = g;
-            this.v = v;
-            this.reset();
-        }
-
-        public void reset() {
-            this.queue = new LinkedList<>();
-            this.colored = new HashSet<>();
-            if (v != null && g != null) {
-                this.queue.add(v);
-                this.colored.add(v.getId());
-            }
-        }
-
-        @Override
-        public boolean hasNext() {
-            return !queue.isEmpty();
-        }
-
-        @Override
-        public Vertex next() {
-            if (this.queue.isEmpty()) {
-                return null;
-            }
-            Vertex u = queue.poll();
-            for (Vertex n : g.getNeighbours(u)) {
-                if (!colored.contains(n.getId())) {
-                    colored.add(n.getId());
-                    queue.add(n);
-                }
-            }
-            return u;
-        }
-
-        @Override
-        public void remove() {
-            // Can be ignored
-        }
-    }
-
-
-    public static void main(String[] args) {
-        GraphImpl g = new GraphImpl();
-        Vertex v = new VertexImpl(0);
-        Vertex n1 = new VertexImpl(1);
-        Vertex n2 = new VertexImpl(2);
-        Vertex n3 = new VertexImpl(3);
-        Vertex n4 = new VertexImpl(4);
-        Vertex w = new VertexImpl(5);
-        g.addVertex(v);
-        g.addVertex(w);
-        g.addVertex(n1);
-        g.addVertex(n2);
-        g.addVertex(n3);
-        g.addVertex(n4);
-        g.addEdge(v, w);
-        g.addEdge(n1, n2);
-        g.addEdge(n1, n3);
-        g.addEdge(n3, n4);
-//        g.addEdge(n4, w);
-        int num = numberOfConnectedComponents(g);
-    }
-
-    public static int numberOfConnectedComponents(Graph g) {
-        Collection<Vertex> unexplored = g.getAllVertices();
-        Vertex startVertex = unexplored.iterator().next();
-        Iterator<Vertex> graphIterator = new GraphIterator(g, startVertex);
-//        Iterator<Vertex> neighboursIterator;
-        int result = 1;
-
-        while (graphIterator.hasNext()){
-            startVertex = graphIterator.next();
-//            if (g.getNeighbours(startVertex).size() == 0){
-//                result++;
-//            }
-//
-//            neighboursIterator = g.getNeighbours(startVertex).iterator();
-//            while (neighboursIterator.hasNext()){
-//                Vertex selectVertex = neighboursIterator.next();
-//                if(unexplored.contains(selectVertex)){
-//                    result++;
-//                }
-//            }
-            unexplored.remove(startVertex);
-
-            if (!graphIterator.hasNext() && unexplored.size() > 0){
-                graphIterator = new GraphIterator(g, unexplored.iterator().next());
-                result++;
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * Find the shortest path between v and u in the graph g.
+     * Tests if solution works for the given input.
+     * Important because there might be different possible MST's for the same graph.
      *
-     * @param g
-     *     graph to search in.
-     * @param v
-     *     node to start from.
-     * @param u
-     *     node to reach.
-     * @return the nodes you that form the shortest path, including v and u. An
-     * empty list iff there is no path between v and u.
+     * @param mst_cost the real cost of a MST on that graph
+     * @param edges the edges that comprise of the graph whose MST we are creating
+     * @param n the amount of nodes in the graph that the MST should reach
      */
-    public static List<Vertex> shortestPath(Graph g, Vertex v, Vertex u) {
-        if(!g.getAllVertices().contains(v) && !g.getAllVertices().contains(u)){
-            return new LinkedList<Vertex>();
-        }else if(v == u){
-            LinkedList<Vertex> result = new LinkedList<Vertex>();
-            result.add(v);
-            return result;
+    void assertMST(int mst_cost, List<Edge> edges, int n) {
+        // Run solution (& verify that input was not modified)
+        List<Edge> original_edges = new ArrayList<>(edges);
+        List<Edge> solution = buildMST(n, edges);
+        assertEquals("You should not modify the original input!", original_edges, edges);
+
+        // Test if it even is a spanning tree
+        UnionFind uf = new UnionFind(n);
+        // Do we have n - 1 edges?
+        assertEquals("A spanning tree would have " + (n - 1) + " edges instead of " + solution.size() + "!"
+                , n - 1, solution.size());
+        // Are they all useful? (Do they connect different clusters?)
+        for (Edge e : solution)
+            assertTrue(uf.union(e.getFrom(), e.getTo()));
+
+        // Test if it is a minimum spanning tree
+        int result_cost = solution.stream().mapToInt(Edge::getCost).sum();
+        assertEquals(mst_cost, result_cost);
+    }
+
+    List<Edge> buildEdges(int[] info, int m) {
+        List<Edge> solution = new ArrayList<>();
+        for (int i = 0; i < m; i++) {
+            int start = i * 3;
+            solution.add(new Edge(info[start], info[start + 1], info[start + 2]));
         }
 
+        return solution;
+    }
 
-        Iterator<Vertex> graphIterator = new GraphIterator(g, v);
-        Map<Vertex, Vertex> predecessors = new TreeMap<>();
-        Vertex selectVertex;
+    @Test(timeout = 100)
+    public void emptyGraphTest() {
+        List<Edge> solution = buildMST(0, new ArrayList<>());
+        assertTrue("An empty graph should have an empty MST.", solution.isEmpty());
+    }
 
-        while (graphIterator.hasNext()){
-            selectVertex = graphIterator.next();
-            if(selectVertex == u){
-                break;
-            }
-            if(!predecessors.containsKey(selectVertex)){
-                Iterator<Vertex> vertexIterator = g.getNeighbours(selectVertex).iterator();
-                while (vertexIterator.hasNext()){
-                    Vertex tmpSelect = vertexIterator.next();
-                    if (!predecessors.containsKey(tmpSelect)){
-                        predecessors.put(selectVertex, tmpSelect);
-                    }
-                }
+    /**
+     * Makes sure they don't just add the smallest cost edge.
+     * Makes sure they don't skip necessary edges (most costly edge is necessary)
+     *
+     * Graph: https://i.imgur.com/BdvaXpV.png
+     * MST: https://i.imgur.com/RS9poLa.png
+     */
+    @Test(timeout = 100)
+    public void completeGraphTest() {
+        int[] info = new int[] {
+                0, 1, 1,
+                0, 2, 1,
+                1, 2, 2,
+                1, 3, 3,
+                3, 4, 2,
+                3, 5, 1,
+                4, 5, 1
+        };
+
+        List<Edge> input = buildEdges(info, 7);
+
+        assertMST(7, input, 6);
+    }
+
+    public static void main(String[] args){
+    }
+
+    /**
+     * Builds a Minimum Spanning Tree (MST) using
+     * Kruskal's Algorithm (as learned in class).
+     * Nodes are numbered from 0 to n - 1.
+     *
+     * @param n the amount of nodes in the graph
+     * @param edges the edges that comprise the graph
+     * @return the list of edges that should be included in the MST
+     */
+    public static List<Edge> buildMST(int n, List<Edge> edges) {
+        PriorityQueue<Edge> prioQ = new PriorityQueue<Edge>();
+        UnionFind uf = new UnionFind(n);
+        List<Edge> result = new LinkedList<Edge>();
+        prioQ.addAll(edges);
+
+        while (!prioQ.isEmpty()){
+            Edge selectedEdge = prioQ.poll();
+            if(uf.union(selectedEdge.getFrom(), selectedEdge.getTo())){
+                result.add(selectedEdge);
             }
         }
-
-        boolean stopFlag = false;
-        LinkedList<Vertex> result = new LinkedList<Vertex>();
-        result.add(v);
-        selectVertex = v;
-
-        while(!stopFlag){
-            if(predecessors.get(selectVertex) == u){
-                break;
-            }
-            result.add(predecessors.get(selectVertex));
-            selectVertex = predecessors.get(selectVertex);
-        }
-        result.add(u);
 
         return result;
     }
-
-
-
 
 }
