@@ -4,187 +4,99 @@ import java.util.*;
 import static org.junit.Assert.*;
 import org.junit.*;
 
-class Entry {
-    private String key;
-    private String value;
+class MultiMap {
 
-    public Entry(String key, String value) {
-        this.key = key;
-        this.value = value;
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public String getValue() {
-        return value;
-    }
-}
-
-class SolutionHashTable {
-    public LinkedList<Entry>[] table;
-    public int capacity;
+    private Map<Integer, List<Integer>> map;
 
     /**
-     * Constructs a new HashTable.
-     *
-     * Capacity of the hash table can not be 0 or negative.
-     *
-     * @param capacity
-     *     to be used as capacity of the table.
-     * @throws IllegalArgumentException
-     *     if the input capacity is invalid.
+     * Creates a new MultiMap.
      */
-    @SuppressWarnings("unchecked")
-    public SolutionHashTable(int capacity) {
-        if(capacity <= 0){
-            throw new IllegalArgumentException();
+    public MultiMap() {
+        this.map = new HashMap<Integer, List<Integer>>();
+    }
+
+    /**
+     * @return The number of (key, value) pairs in the MultiMap.
+     */
+    public int size() {
+        Iterator<List<Integer>> iterator = this.map.values().iterator();
+        int count = 0;
+        while (iterator.hasNext()){
+            List<Integer> select = iterator.next();
+            count += select.size();
         }
-
-        this.table = new LinkedList[capacity];
-        this.capacity = capacity;
+        return count;
     }
 
     /**
-     * Add a new Entry to the hash table,
-     * uses separate chaining to deal with collisions.
-     *
-     * Returns false, if the key is null.
-     *
-     * @param key
-     *     String representing the key of the entry.
-     * @param value
-     *     String representing the value of the entry.
-     * @return true iff entry has been added successfully, else false.
+     * @return True if the MultiMap is empty, false otherwise.
      */
-    public boolean put(String key, String value) {
-        if(key == null){
+    public boolean isEmpty() {
+        if (size() > 0){
             return false;
         }
-        Entry input = new Entry(key, value);
-
-        if(table[hash(key)] == null){
-            table[hash(key)] = new LinkedList<Entry>();
-            table[hash(key)].add(input);
-            return true;
-        }
-
-        ListIterator<Entry> iterator = table[hash(key)].listIterator(0);
-
-        while(iterator.hasNext()){
-            Entry check = iterator.next();
-            if(check.getKey() == key){
-                table[hash(key)].remove(check);
-            }
-        }
-
-        table[hash(key)].add(input);
         return true;
     }
 
     /**
-     * Retrieve the value of the entry associated with this key.
+     * Adds the given (key, value) pair to the MultiMap.
      *
-     * Returns null, if the key is null.
-     *
-     * @param key
-     *     String representing the key of the entry to look for.
-     * @return value of the entry as String iff the entry with this key is found in the hash table, else null.
+     * @param key Key for the new item.
+     * @param value New item to add to the MultiMap.
      */
-    public String get(String key) {
-        if(key == null){
-            return null;
+    public void put(int key, int value) {
+        if (map.get(key) == null) {
+            map.put(key, new LinkedList<Integer>());
         }
-
-        if(table[hash(key)] == null){
-            return null;
-        }
-
-        if(table[hash(key)].size() == 1){
-            if(table[hash(key)].peek().getKey() == key){
-                return table[hash(key)].peek().getValue();
-            }
-            return null;
-        }
-
-        Iterator<Entry> iterator = table[hash(key)].descendingIterator();
-
-        while(iterator.hasNext()){
-            Entry check = iterator.next();
-            if(check.getKey() == key){
-                return check.getValue();
-            }
-        }
-
-        return null;
+        map.get(key).add(value);
     }
 
     /**
-     * Remove the entry associated with this key from the hash table.
+     * Returns all values in the MultiMap for the given key.
      *
-     * Returns false, if the key is null.
-     *
-     * @param key
-     *     String representing the key of the entry to remove.
-     * @return true iff the entry has been successfully removed, else false.
+     * @param key Key to return all entries for.
+     * @return A list of all entries for the given key.
+     *         If the key is not in the map, return an empty list.
      */
-    public boolean remove(String key) {
-        if(key == null){
-            return false;
+    public List<Integer> get(int key) {
+        if (map.get(key) != null) {
+            return map.get(key);
         }
+        return new LinkedList<Integer>();
+    }
 
-        if(table[hash(key)] == null){
-            return false;
-        }
-
-        if(table[hash(key)].size() == 1){
-            if(table[hash(key)].peek().getKey() == key){
-                table[hash(key)].remove();
-                return true;
-            }
-            return false;
-        }
-
-        if(table[hash(key)].size() == 1){
-            table[hash(key)].remove();
+    /**
+     * Removes the given (key, value) pair from the MultiMap.
+     *
+     * @param key Key for the value that should be removed.
+     * @param value Value to remove.
+     * @return True if removal was successful, false otherwise.
+     */
+    public boolean remove(int key, int value) {
+        if (map.get(key).contains(value)) {
+            map.get(key).remove(map.get(key).indexOf(value));
             return true;
-        }
-
-        Iterator<Entry> iterator = table[hash(key)].descendingIterator();
-
-        while(iterator.hasNext()){
-            Entry check = iterator.next();
-            if(check.getKey() == key){
-                table[hash(key)].remove(check);
-                return true;
-            }
         }
         return false;
     }
-
-    /**
-     * Hashes a string representing a key
-     *
-     * @param key
-     *     String that needs to be hashed.
-     * @return the hashcode of the string, modulo the capacity of the HashTable.
-     */
-    public int hash(String key) {
-        return Math.abs(key.hashCode()) % capacity;
-    }
 }
+
+
 
 
 public class Main {
 
     public static void main(String[] args) {
-        SolutionHashTable tab = new SolutionHashTable(1);
-        assertTrue(tab.put("apple", "juice"));
-        assertTrue(tab.put("peer", "sap"));
-        assertEquals("juice", tab.get("apple"));
-        assertEquals(true, tab.remove("apple"));
-        assertEquals(null, tab.get("apple"));
+        MultiMap map = new MultiMap();
+        map.put(1, 2);
+        map.put(1, 2);
+        assertFalse(map.isEmpty());
+        assertEquals(2, map.size());
+        List<Integer> result = map.get(1);
+//        assertEquals(Collections.singletonList(2), map.get(1));
+//        assertFalse(map.remove(1, 2));
+        assertTrue(map.remove(1, 2));
+        assertEquals(0, map.size());
     }
 
 }
