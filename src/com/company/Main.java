@@ -1,5 +1,6 @@
 package com.company;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -7,198 +8,470 @@ import org.junit.*;
 
 public class Main {
 
-    class Edge implements Comparable<Edge> {
-        private int from;
-        private int to;
-        private int cost;
+    /**
+     * Container class used to store a Vertex and an int.
+     */
+    class VertexNumPair {
 
-        public Edge(int from, int to, int cost) {
-            this.from = from;
-            this.to = to;
-            this.cost = cost;
+        private Vertex vertex;
+
+        private int num;
+
+        public VertexNumPair(Vertex vertex, int num) {
+            this.vertex = vertex;
+            this.num = num;
         }
 
-        public int getFrom() {
-            return from;
+        public Vertex getVertex() {
+            return vertex;
         }
 
-        public int getTo() {
-            return to;
+        public int getNum() {
+            return num;
+        }
+    }
+
+    class Vertex implements Comparable<Vertex> {
+
+        private int id;
+
+        private Set<VertexNumPair> neighbours;
+
+        public Vertex(int id) {
+            this.id = id;
+            neighbours = new HashSet<>();
         }
 
-        public int getCost() {
-            return cost;
+        public int getId() {
+            return id;
         }
 
-        @Override
-        public int compareTo(Edge o) {
-            return Integer.compare(this.cost, o.cost);
+        public void addNeighbour(Vertex v, int weight) {
+            neighbours.add(new VertexNumPair(v, weight));
         }
 
         @Override
         public String toString() {
-            return "Edge{" +
-                    "from=" + from +
-                    ", to=" + to +
-                    ", cost=" + cost +
-                    '}';
+            return "<vertex: " + id + ">";
+        }
+
+        public Collection<VertexNumPair> getNeighbours() {
+            return new ArrayList<>(this.neighbours);
+        }
+
+        @Override
+        public int compareTo(Vertex o) {
+            return this.getId() - o.getId();
+        }
+
+        @Override
+        public int hashCode() {
+            return this.getId();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof Vertex && ((Vertex) o).getId() == this.getId();
         }
     }
 
-    static class UnionFind {
+    class Graph {
 
-        private int[] parent;
-
-        private int[] rank;
-
-        // Union Find structure implemented with two arrays for Union by Rank
-        public UnionFind(int size) {
-            parent = new int[size];
-            rank = new int[size];
-            for (int i = 0; i < size; i++) parent[i] = i;
-        }
+        private Map<Integer, Vertex> vertices = new HashMap<>();
 
         /**
-         * Merge two clusters, if they are not already part of the same cluster.
+         * Creates a new graph with n vertices.
          *
-         * @param i a node in the first cluster
-         * @param j a node in the second cluster
-         * @return true iff i and j had different clusters.
+         * @param n Amount of vertices in the graph.
          */
-        boolean union(int i, int j) {
-            int parent1 = find(i);
-            int parent2 = find(j);
-            if (parent2 == parent1)
-                return false;
-            if (rank[parent1] > rank[parent2]) {
-                parent[parent2] = parent1;
-            } else if (rank[parent2] > rank[parent1]) {
-                parent[parent1] = parent2;
-            } else {
-                parent[parent2] = parent1;
-                rank[parent1]++;
-            }
-            return true;
+        public Graph(int n) {
+            for (int i = 0; i < n; i++) vertices.put(i, new Vertex(i));
         }
 
         /**
-         * NB: this function should also do path compression
-         * @param i index of a node
-         * @return the root of the subtree containg i.
+         * Returns the vertex with the given ID.
+         *
+         * @param id The ID for the vertex to get.
+         * @return The vertex with the given ID.
+         * @throws IllegalArgumentException if no vertex with the given ID is in the graph.
          */
-        int find(int i) {
-            int parent = this.parent[i];
-            if (i == parent) {
-                return i;
+        public Vertex getVertex(int id) throws IllegalArgumentException {
+            if (!vertices.containsKey(id))
+                throw new IllegalArgumentException("Vertex not in graph");
+            return vertices.get(id);
+        }
+
+        public Collection<Vertex> getAllVertices() {
+            return new ArrayList<>(this.vertices.values());
+        }
+
+        /**
+         * Returns all neighbours of the given vertex sorted by their ID.
+         *
+         * @param v The vertex to get the neighbours from.
+         * @return A sorted list of all neighbouring vertices.
+         */
+        public List<VertexNumPair> getNeighbours(Vertex v) {
+            List<VertexNumPair> neighbours = new ArrayList<>(v.getNeighbours());
+            neighbours.sort(Comparator.comparingInt(a -> a.getVertex().getId()));
+            return neighbours;
+        }
+
+        /**
+         * Adds an edge between vertex u and v with the given weight.
+         *
+         * @param u First vertex.
+         * @param v Second vertex.
+         * @param weight Weight of the edge between a and b.
+         */
+        public void addEdge(Vertex u, Vertex v, int weight) {
+            u.addNeighbour(v, weight);
+            v.addNeighbour(u, weight);
+        }
+
+        /**
+         * Adds an edge between the vertices with IDs u and v with the given weight.
+         *
+         * @param u ID of the first vertex.
+         * @param v ID of the second vertex.
+         * @param weight Weight of the edge between a and b.
+         * @throws IllegalArgumentException if no vertex with the given ID is in the graph.
+         */
+        public void addEdge(int u, int v, int weight) throws IllegalArgumentException {
+            addEdge(getVertex(u), getVertex(v), weight);
+        }
+    }
+
+    class AdaptablePQ {
+
+        private class PQEntry implements Comparable<PQEntry> {
+
+            private int key;
+
+            private Vertex value;
+
+            private int index;
+
+            public PQEntry(int key, Vertex value, int index) {
+                this.key = key;
+                this.value = value;
+                this.index = index;
             }
-            return this.parent[i] = find(parent);
+
+            protected int getKey() {
+                return key;
+            }
+
+            protected void setKey(int key) {
+                this.key = key;
+            }
+
+            protected Vertex getValue() {
+                return value;
+            }
+
+            protected int getIndex() {
+                return index;
+            }
+
+            protected void setIndex(int index) {
+                this.index = index;
+            }
+
+            @Override
+            public int compareTo(PQEntry o) {
+                return Integer.compare(this.getKey(), o.getKey());
+            }
         }
 
-        // Return the rank of the trees
-        public int[] getRank() {
-            return rank;
+        private ArrayList<PQEntry> heap = new ArrayList<>();
+
+        private Map<Vertex, PQEntry> entries = new HashMap<>();
+
+        private int parent(int j) {
+            return (j - 1) / 2;
         }
 
-        // Return the parent of the trees
-        public int[] getParent() {
-            return parent;
+        private int left(int j) {
+            return 2 * j + 1;
+        }
+
+        private int right(int j) {
+            return 2 * j + 2;
+        }
+
+        private boolean hasLeft(int j) {
+            return left(j) < heap.size();
+        }
+
+        private boolean hasRight(int j) {
+            return right(j) < heap.size();
+        }
+
+        /**
+         * Exchanges the entries at indices i and j of the array list.
+         *
+         * @param i First index to swap.
+         * @param j Second index to swap.
+         */
+        private void swap(int i, int j) {
+            PQEntry temp = heap.get(i);
+            heap.set(i, heap.get(j));
+            heap.set(j, temp);
+            heap.get(i).setIndex(i);
+            heap.get(j).setIndex(j);
+        }
+
+        /**
+         * Moves the entry at index j higher, if necessary, to restore the heap property.
+         *
+         * @param j Index to start from.
+         */
+        private void upheap(int j) {
+            while (j > 0) {
+                int p = parent(j);
+                if (heap.get(j).compareTo(heap.get(p)) >= 0)
+                    break;
+                swap(j, p);
+                j = p;
+            }
+        }
+
+        /**
+         * Moves the entry at index j lower, if necessary, to restore the heap property.
+         *
+         * @param j Index to start from.
+         */
+        private void downheap(int j) {
+            while (hasLeft(j)) {
+                int leftIndex = left(j);
+                int smallChildIndex = leftIndex;
+                if (hasRight(j)) {
+                    int rightIndex = right(j);
+                    if (heap.get(leftIndex).compareTo(heap.get(rightIndex)) > 0)
+                        smallChildIndex = rightIndex;
+                }
+                if (heap.get(smallChildIndex).compareTo(heap.get(j)) >= 0)
+                    break;
+                swap(j, smallChildIndex);
+                j = smallChildIndex;
+            }
+        }
+
+        /**
+         * Restores the heap property by moving the entry at index j upward/downward.
+         *
+         * @param j Index to start restoring the heap from.
+         */
+        private void bubble(int j) {
+            if (j > 0 && heap.get(j).compareTo(heap.get(parent(j))) < 0)
+                upheap(j);
+            else
+                downheap(j);
+        }
+
+        /**
+         * Adds a new vertex to the PriorityQueue with the given key.
+         *
+         * @param vertex Vertex to add to the queue.
+         * @param key Key for the vertex in the queue.
+         */
+        private void insert(Vertex vertex, int key) {
+            PQEntry newest = new PQEntry(key, vertex, heap.size());
+            heap.add(newest);
+            upheap(heap.size() - 1);
+            entries.put(vertex, newest);
+        }
+
+        // ------- PUBLIC METHODS -----------------------------------------------------
+        /**
+         * Returns the number of items in the priority queue.
+         *
+         * @return number of items.
+         */
+        public int size() {
+            return heap.size();
+        }
+
+        /**
+         * Replaces the key of a given vertex and reorders it in the PriorityQueue.
+         * If the key was not in the PriorityQueue yet, it is added.
+         *
+         * @param vertex Vertex to change the key from.
+         * @param key New key for the given vertex.
+         */
+        public void insertOrReplace(Vertex vertex, int key) {
+            if (!entries.containsKey(vertex)) {
+                this.insert(vertex, key);
+            } else {
+                PQEntry entry = entries.get(vertex);
+                entry.setKey(key);
+                bubble(entry.getIndex());
+            }
+        }
+
+        /**
+         * Removes and returns an entry with minimal key.
+         *
+         * @return the removed entry's Vertex and its key (or null if the PQ is empty).
+         */
+        public VertexNumPair removeMin() {
+            if (isEmpty())
+                return null;
+            PQEntry entry = heap.get(0);
+            swap(0, heap.size() - 1);
+            heap.remove(heap.size() - 1);
+            downheap(0);
+            entries.remove(entry.getValue());
+            return new VertexNumPair(entry.getValue(), entry.getKey());
+        }
+
+        /**
+         * Returns whether the PriorityQueue is empty or not.
+         *
+         * @return True when the PQ is empty, false otherwise.
+         */
+        public boolean isEmpty() {
+            return heap.isEmpty();
         }
     }
 
     /**
-     * Tests if solution works for the given input.
-     * Important because there might be different possible MST's for the same graph.
-     *
-     * @param mst_cost the real cost of a MST on that graph
-     * @param edges the edges that comprise of the graph whose MST we are creating
-     * @param n the amount of nodes in the graph that the MST should reach
+     * Tests the following graph with all edges having weight 1
+     * 1 - 0 - 2 - 3
      */
-    void assertMST(int mst_cost, List<Edge> edges, int n) {
-        // Run solution (& verify that input was not modified)
-        List<Edge> original_edges = new ArrayList<>(edges);
-        List<Edge> solution = buildMST(n, edges);
-        assertEquals("You should not modify the original input!", original_edges, edges);
-
-        // Test if it even is a spanning tree
-        UnionFind uf = new UnionFind(n);
-        // Do we have n - 1 edges?
-        assertEquals("A spanning tree would have " + (n - 1) + " edges instead of " + solution.size() + "!"
-                , n - 1, solution.size());
-        // Are they all useful? (Do they connect different clusters?)
-        for (Edge e : solution)
-            assertTrue(uf.union(e.getFrom(), e.getTo()));
-
-        // Test if it is a minimum spanning tree
-        int result_cost = solution.stream().mapToInt(Edge::getCost).sum();
-        assertEquals(mst_cost, result_cost);
-    }
-
-    List<Edge> buildEdges(int[] info, int m) {
-        List<Edge> solution = new ArrayList<>();
-        for (int i = 0; i < m; i++) {
-            int start = i * 3;
-            solution.add(new Edge(info[start], info[start + 1], info[start + 2]));
-        }
-
-        return solution;
-    }
-
-    @Test(timeout = 100)
-    public void emptyGraphTest() {
-        List<Edge> solution = buildMST(0, new ArrayList<>());
-        assertTrue("An empty graph should have an empty MST.", solution.isEmpty());
+    @Test
+    public void testUnweightedLine() {
+        Graph g = new Graph(4);
+        g.addEdge(0, 1, 1);
+        g.addEdge(0, 2, 1);
+        g.addEdge(2, 3, 1);
+        // Path from 1 to 3 is
+        List<Vertex> path = new ArrayList<Vertex>();
+        path.add(g.getVertex(1));
+        path.add(g.getVertex(0));
+        path.add(g.getVertex(2));
+        path.add(g.getVertex(3));
+        assertEquals(path, shortestPath(g, g.getVertex(1), g.getVertex(3)));
     }
 
     /**
-     * Makes sure they don't just add the smallest cost edge.
-     * Makes sure they don't skip necessary edges (most costly edge is necessary)
-     *
-     * Graph: https://i.imgur.com/BdvaXpV.png
-     * MST: https://i.imgur.com/RS9poLa.png
+     * Tests the following graph with all edges having weight 1
+     * 1 - 0 - 3 - 5
+     *     |     /
+     *     2 - 4
      */
-    @Test(timeout = 100)
-    public void completeGraphTest() {
-        int[] info = new int[] {
-                0, 1, 1,
-                0, 2, 1,
-                1, 2, 2,
-                1, 3, 3,
-                3, 4, 2,
-                3, 5, 1,
-                4, 5, 1
-        };
-
-        List<Edge> input = buildEdges(info, 7);
-
-        assertMST(7, input, 6);
+    @Test
+    public void testUnweightedCycle() {
+        Graph g = new Graph(6);
+        g.addEdge(0, 1, 1);
+        g.addEdge(0, 2, 1);
+        g.addEdge(2, 4, 1);
+        g.addEdge(0, 3, 1);
+        g.addEdge(3, 5, 1);
+        g.addEdge(4, 5, 1);
+        // Path from 0 to 4 is
+        List<Vertex> path = new ArrayList<Vertex>();
+        path.add(g.getVertex(0));
+        path.add(g.getVertex(2));
+        path.add(g.getVertex(4));
+        assertEquals(path, shortestPath(g, g.getVertex(0), g.getVertex(4)));
+        // Path from 1 to 2
+        path = new ArrayList<Vertex>();
+        path.add(g.getVertex(1));
+        path.add(g.getVertex(0));
+        path.add(g.getVertex(2));
+        assertEquals(path, shortestPath(g, g.getVertex(1), g.getVertex(2)));
+        // Path from 3 to 4
+        path = new ArrayList<Vertex>();
+        path.add(g.getVertex(3));
+        path.add(g.getVertex(5));
+        path.add(g.getVertex(4));
+        assertEquals(path, shortestPath(g, g.getVertex(3), g.getVertex(4)));
+        // Path from 3 to 1
+        path = new ArrayList<Vertex>();
+        path.add(g.getVertex(3));
+        path.add(g.getVertex(0));
+        path.add(g.getVertex(1));
+        assertEquals(path, shortestPath(g, g.getVertex(3), g.getVertex(1)));
     }
+
 
     public static void main(String[] args){
+
     }
 
     /**
-     * Builds a Minimum Spanning Tree (MST) using
-     * Kruskal's Algorithm (as learned in class).
-     * Nodes are numbered from 0 to n - 1.
-     *
-     * @param n the amount of nodes in the graph
-     * @param edges the edges that comprise the graph
-     * @return the list of edges that should be included in the MST
+     * Returns the list of vertices along the shortest path between vertex a and b in graph g.
+     * @param g Graph to consider.
+     * @param a Vertex to start from.
+     * @param b Vertex to go to.
+     * @return The list of vertices along the shortest path between a and b, or null if no such path exists.
      */
-    public static List<Edge> buildMST(int n, List<Edge> edges) {
-        PriorityQueue<Edge> prioQ = new PriorityQueue<Edge>();
-        UnionFind uf = new UnionFind(n);
-        List<Edge> result = new LinkedList<Edge>();
-        prioQ.addAll(edges);
+    public List<Vertex> shortestPath(Graph g, Vertex a, Vertex b) {
+        AdaptablePQ aPrioQ = new AdaptablePQ();
+        int[] distances = new int[g.getAllVertices().size()];
+        List<Vertex> vertexDone = new LinkedList<Vertex>();
 
-        while (!prioQ.isEmpty()){
-            Edge selectedEdge = prioQ.poll();
-            if(uf.union(selectedEdge.getFrom(), selectedEdge.getTo())){
-                result.add(selectedEdge);
-            }
+        for (int i = 0; i < distances.length; i++){
+            distances[i] = -1;
         }
 
-        return result;
+        VertexNumPair select;
+        aPrioQ.insertOrReplace(a, 0);
+        distances[a.getId()] = 0;
+
+        boolean found = false;
+
+        while (vertexDone.size() != g.getAllVertices().size()){
+            select = aPrioQ.removeMin();
+
+            Iterator<VertexNumPair> neighborsIterator = g.getNeighbours(select.getVertex()).iterator();
+
+            while (neighborsIterator.hasNext()){
+                VertexNumPair neighbor = neighborsIterator.next();
+                if (neighbor.getVertex() == b){
+                    found = true;
+                }
+                if (!vertexDone.contains(neighbor.getVertex())){
+                    int checkDist = distances[neighbor.getVertex().getId()];
+                    if (neighbor.getNum() + select.getNum() < checkDist || checkDist == -1){
+                        distances[neighbor.getVertex().getId()] = neighbor.getNum() + select.getNum();
+                        aPrioQ.insertOrReplace(neighbor.getVertex(), neighbor.getNum() + select.getNum());
+                    }
+                }
+            }
+            vertexDone.add(select.getVertex());
+        }
+
+        if (!found){
+            return null;
+        }
+
+        Stack<Vertex> pathCreator = new Stack<Vertex>();
+        List<Vertex> path = new LinkedList<Vertex>();
+        Vertex current = b;
+        pathCreator.push(current);
+
+        while (current != a){
+            Iterator<VertexNumPair> neighborsIterator = g.getNeighbours(current).iterator();
+            int distCheck = -1;
+            while(neighborsIterator.hasNext()){
+                Vertex temp = neighborsIterator.next().getVertex();
+                if (distCheck > distances[temp.getId()] || distCheck == -1){
+                    distCheck = distances[temp.getId()];
+                    current = temp;
+                }
+            }
+            pathCreator.push(current);
+        }
+
+        while (!pathCreator.isEmpty()){
+            path.add(pathCreator.pop());
+        }
+        return path;
     }
+
+
 
 }
