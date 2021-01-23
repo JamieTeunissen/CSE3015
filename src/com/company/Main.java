@@ -4,158 +4,168 @@ import java.util.*;
 import static org.junit.Assert.*;
 import org.junit.*;
 
-class LibraryQueue<T> {
-    private PriorityQueue<T> ll;
-
-    public LibraryQueue() {
-        ll = new PriorityQueue<>();
-    }
+class Heap {
+    private int size = 0;
+    private Heap.Node root;
 
     /**
-     * @return true iff the priority queue is empty, else false
-     */
-    public boolean isEmpty() {
-        return ll.isEmpty();
-    }
-
-    /**
-     * @return amount of elements in the priority queue
-     */
-    public int size() {
-        return ll.size();
-    }
-
-    /**
-     * Adds an Entry to the priority queue sorted on the key in a decreasing order.
+     * Initializes a Heap with one Node.
      *
-     * @param e
-     *     Entry to be added.
+     * @param rootKey
+     *     the key given to the root Node of the Heap.
      */
-    public void enqueue(T e) {
-        ll.offer(e);
+    public Heap(int rootKey) {
+        root = new Heap.Node(rootKey);
+        size++;
     }
 
     /**
-     * Removes the Entry with the maximum key from the priority queue.
-     *
-     * @return Entry with max key in pq
-     * @throws NoSuchElementException
-     *     iff this queue is empty
+     * @return the root Node of this Heap.
      */
-    public T dequeue() throws NoSuchElementException {
-        return ll.remove();
+    public Heap.Node getRoot() {
+        return root;
     }
 
     /**
-     * Returns the Entry with the maximum key from the priority queue,
-     * without removing it.
-     *
-     * @return Entry with max key in pq
-     * @throws NoSuchElementException
-     *     iff this queue is empty
+     * @param n
+     *     The Node to get the left child from.
+     * @return the left child of n.
      */
-    public T front() throws NoSuchElementException {
-        if (ll.peek() == null) {
-            throw new NoSuchElementException();
-        }
-        return ll.peek();
+    public Heap.Node getLeft(Heap.Node n) {
+        return n.left;
     }
-}
-
-class Entry implements Comparable<Entry> {
-    private int key;
-    private char element;
-
-    public Entry(int key, char element) {
-        this.key = key;
-        this.element = element;
-    }
-
-    public int getKey() {
-        return this.key;
-    }
-
-    public char getElement() {
-        return this.element;
-    }
-
-    @Override
-    public int compareTo(Entry other) {
-        // Used to sort the entries in descending order
-        return other.getKey() - this.getKey();
-    }
-}
-
-class SLList {
-    private LinkedList<Character> ll;
 
     /**
-     * Creates a new SLList with a String, each character will be a node.
-     * The first character in the String will be the head.
-     *
-     * @param s
-     *     String that this SLList represents.
+     * @param n
+     *     The Node to get the right child from.
+     * @return the right child of n.
      */
-    public SLList(String s) {
-        ll = new LinkedList<>();
-        for (int i = s.length() - 1; i >= 0; i--) {
-            ll.addFirst(s.charAt(i));
+    public Heap.Node getRight(Heap.Node n) {
+        return n.right;
+    }
+
+    /**
+     * @param n
+     *     The Node to check the left child from.
+     * @return true iff Node n has a left child, false otherwise.
+     */
+    public boolean hasLeft(Heap.Node n) {
+        return n.left != null;
+    }
+
+    /**
+     * @param n
+     *     The Node to check the right child from.
+     * @return true iff Node n has a right child, false otherwise.
+     */
+    public boolean hasRight(Heap.Node n) {
+        return n.right != null;
+    }
+
+    /**
+     * This method creates a new left child of n if it does not yet have a left child.
+     *
+     * @param n
+     *     The Node to set the left child from.
+     * @param leftKey
+     *     The key to set in the left child of Node n.
+     */
+    public void setLeft(Heap.Node n, int leftKey) {
+        if (n.left == null) {
+            n.left = new Heap.Node(leftKey);
+            size++;
+        } else {
+            n.left.key = leftKey;
         }
     }
 
     /**
-     * Removes the first element in the list and returns it.
+     * This method creates a new right child of n if it does not yet have a right child.
      *
-     * @return first element in the list
+     * @param n
+     *     The Node to set the right child from.
+     * @param rightKey
+     *     The key to set in the right child of Node n.
      */
-    public Character removeFirst() {
-        return ll.poll();
+    public void setRight(Heap.Node n, int rightKey) {
+        if (n.right == null) {
+            n.right = new Heap.Node(rightKey);
+            size++;
+        } else {
+            n.right.key = rightKey;
+        }
     }
 
     /**
-     * Returns the first element in the first and returns it, without removing it.
-     *
-     * @return first element in the list
-     */
-    public Character getFirst() {
-        return ll.peek();
-    }
-
-    /**
-     * Returns the size of the list.
-     *
-     * @return the size of the list
+     * @return The size of this Heap, i.e. the amount of Nodes.
      */
     public int size() {
-        return ll.size();
+        return size;
+    }
+
+    class Node {
+        private int key;
+        private Heap.Node left, right;
+
+        /**
+         * Simple constructor.
+         *
+         * @param key
+         *     to set as key.
+         */
+        public Node(int key) {
+            this.key = key;
+        }
+
+        /**
+         * @return The integer key of this Node.
+         */
+        public int getKey() {
+            return key;
+        }
+
+        @Override
+        public String toString() {
+            return key + "(" + (left == null ? " " : left) + ',' + (right == null ? " " : right) + ')';
+        }
     }
 }
 
 public class Main {
 
     public static void main(String[] args) {
-        SLList list = new SLList("abdba");
-        assertTrue(checkPalindrome(list));
+        Heap heap = new Heap(1);
+        heap.setLeft(heap.getRoot(), 2);
+        heap.setRight(heap.getRoot(), 3);
+        heap.setLeft(heap.getLeft(heap.getRoot()), 4);
+        heap.setRight(heap.getLeft(heap.getRoot()), 5);
+        heap.setLeft(heap.getRight(heap.getRoot()), 6);
+        heap.setRight(heap.getRight(heap.getRoot()), 7);
+        assertEquals(7, findLastPosition(heap).getKey());
     }
 
-    public static boolean checkPalindrome(SLList list) {
-        LibraryQueue<Entry> queue = new LibraryQueue<>();
-        int listSize = list.size();
+    /**
+     * @param heap
+     *     the Heap to check, can be null. If not null, this heap will always contain at least one Node.
+     * @return the Node corresponding to the last position in the Heap, or null if the Heap is null.
+     */
+    public static Heap.Node findLastPosition(Heap heap) {
+        int nNodes = heap.size();
+        int mask = 1;
+        Heap.Node node = heap.getRoot();
 
-        for(int i = 0; i < (listSize/2); i++){
-            queue.enqueue(new Entry(i, list.removeFirst()));
-        }
 
-        if ((listSize % 2) == 1){
-            list.removeFirst();
-        }
-
-        for(int i = ((listSize/2) + (listSize % 2)); i < listSize; i++){
-            if (queue.dequeue().getElement() != list.removeFirst()){
-                return false;
+        while(nNodes != 1){
+            int check = mask & nNodes;
+            if(check == 1){
+                node = heap.getRight(node);
+            }else{
+                node = heap.getLeft(node);
             }
+            nNodes = nNodes >> 1;
         }
-        return true;
+
+        return node;
     }
 
 
