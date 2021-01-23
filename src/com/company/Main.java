@@ -4,99 +4,160 @@ import java.util.*;
 import static org.junit.Assert.*;
 import org.junit.*;
 
-class MultiMap {
+class LibraryQueue<T> {
+    private PriorityQueue<T> ll;
 
-    private Map<Integer, List<Integer>> map;
-
-    /**
-     * Creates a new MultiMap.
-     */
-    public MultiMap() {
-        this.map = new HashMap<Integer, List<Integer>>();
+    public LibraryQueue() {
+        ll = new PriorityQueue<>();
     }
 
     /**
-     * @return The number of (key, value) pairs in the MultiMap.
-     */
-    public int size() {
-        Iterator<List<Integer>> iterator = this.map.values().iterator();
-        int count = 0;
-        while (iterator.hasNext()){
-            List<Integer> select = iterator.next();
-            count += select.size();
-        }
-        return count;
-    }
-
-    /**
-     * @return True if the MultiMap is empty, false otherwise.
+     * @return true iff the priority queue is empty, else false
      */
     public boolean isEmpty() {
-        if (size() > 0){
-            return false;
-        }
-        return true;
+        return ll.isEmpty();
     }
 
     /**
-     * Adds the given (key, value) pair to the MultiMap.
-     *
-     * @param key Key for the new item.
-     * @param value New item to add to the MultiMap.
+     * @return amount of elements in the priority queue
      */
-    public void put(int key, int value) {
-        if (map.get(key) == null) {
-            map.put(key, new LinkedList<Integer>());
-        }
-        map.get(key).add(value);
+    public int size() {
+        return ll.size();
     }
 
     /**
-     * Returns all values in the MultiMap for the given key.
+     * Adds an Entry to the priority queue sorted on the key in a decreasing order.
      *
-     * @param key Key to return all entries for.
-     * @return A list of all entries for the given key.
-     *         If the key is not in the map, return an empty list.
+     * @param e
+     *     Entry to be added.
      */
-    public List<Integer> get(int key) {
-        if (map.get(key) != null) {
-            return map.get(key);
-        }
-        return new LinkedList<Integer>();
+    public void enqueue(T e) {
+        ll.offer(e);
     }
 
     /**
-     * Removes the given (key, value) pair from the MultiMap.
+     * Removes the Entry with the maximum key from the priority queue.
      *
-     * @param key Key for the value that should be removed.
-     * @param value Value to remove.
-     * @return True if removal was successful, false otherwise.
+     * @return Entry with max key in pq
+     * @throws NoSuchElementException
+     *     iff this queue is empty
      */
-    public boolean remove(int key, int value) {
-        if (map.get(key).contains(value)) {
-            map.get(key).remove(map.get(key).indexOf(value));
-            return true;
+    public T dequeue() throws NoSuchElementException {
+        return ll.remove();
+    }
+
+    /**
+     * Returns the Entry with the maximum key from the priority queue,
+     * without removing it.
+     *
+     * @return Entry with max key in pq
+     * @throws NoSuchElementException
+     *     iff this queue is empty
+     */
+    public T front() throws NoSuchElementException {
+        if (ll.peek() == null) {
+            throw new NoSuchElementException();
         }
-        return false;
+        return ll.peek();
     }
 }
 
+class Entry implements Comparable<Entry> {
+    private int key;
+    private char element;
 
+    public Entry(int key, char element) {
+        this.key = key;
+        this.element = element;
+    }
 
+    public int getKey() {
+        return this.key;
+    }
+
+    public char getElement() {
+        return this.element;
+    }
+
+    @Override
+    public int compareTo(Entry other) {
+        // Used to sort the entries in descending order
+        return other.getKey() - this.getKey();
+    }
+}
+
+class SLList {
+    private LinkedList<Character> ll;
+
+    /**
+     * Creates a new SLList with a String, each character will be a node.
+     * The first character in the String will be the head.
+     *
+     * @param s
+     *     String that this SLList represents.
+     */
+    public SLList(String s) {
+        ll = new LinkedList<>();
+        for (int i = s.length() - 1; i >= 0; i--) {
+            ll.addFirst(s.charAt(i));
+        }
+    }
+
+    /**
+     * Removes the first element in the list and returns it.
+     *
+     * @return first element in the list
+     */
+    public Character removeFirst() {
+        return ll.poll();
+    }
+
+    /**
+     * Returns the first element in the first and returns it, without removing it.
+     *
+     * @return first element in the list
+     */
+    public Character getFirst() {
+        return ll.peek();
+    }
+
+    /**
+     * Returns the size of the list.
+     *
+     * @return the size of the list
+     */
+    public int size() {
+        return ll.size();
+    }
+}
 
 public class Main {
 
     public static void main(String[] args) {
-        MultiMap map = new MultiMap();
-        map.put(1, 2);
-        map.put(1, 2);
-        assertFalse(map.isEmpty());
-        assertEquals(2, map.size());
-        List<Integer> result = map.get(1);
-//        assertEquals(Collections.singletonList(2), map.get(1));
-//        assertFalse(map.remove(1, 2));
-        assertTrue(map.remove(1, 2));
-        assertEquals(0, map.size());
+        SLList list = new SLList("abdba");
+        assertTrue(checkPalindrome(list));
     }
+
+    public static boolean checkPalindrome(SLList list) {
+        LibraryQueue<Entry> queue = new LibraryQueue<>();
+        int listSize = list.size();
+
+        for(int i = 0; i < (listSize/2); i++){
+            queue.enqueue(new Entry(i, list.removeFirst()));
+        }
+
+        if ((listSize % 2) == 1){
+            list.removeFirst();
+        }
+
+        for(int i = ((listSize/2) + (listSize % 2)); i < listSize; i++){
+            if (queue.dequeue().getElement() != list.removeFirst()){
+                return false;
+            }
+        }
+        return true;
+    }
+
+
 
 }
