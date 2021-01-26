@@ -1,128 +1,67 @@
 package com.company;
 
 import java.util.*;
+import static java.util.Arrays.*;
 import static org.junit.Assert.*;
 import org.junit.*;
 
-class Graph {
-    static class Vertex {
-        private int id;
-        private Set<Vertex> neighbours;
 
-        public Vertex(int id) {
-            this.id = id;
-            neighbours = new HashSet<>();
-        }
-
-        public void addNeighbour(Vertex v) {
-            neighbours.add(v);
-        }
-
-        private Collection<Vertex> getNeighbours() {
-            return new ArrayList<>(this.neighbours);
-        }
-
-        public int getId() {
-            return this.id;
-        }
-    }
-
-    Map<Integer, Vertex> vertices;
-
-    public Graph() {
-        this.vertices = new HashMap<>();
-    }
-
-    public void addVertex(Vertex v) {
-        this.vertices.put(v.getId(), v);
-    }
-
-    public Collection<Vertex> getAllVertices() {
-        return new ArrayList<>(this.vertices.values());
-    }
-
-    public List<Vertex> getNeighbours(Vertex v) {
-        List<Vertex> neigh = new ArrayList<>(((Vertex) v).getNeighbours());
-        return neigh;
-    }
-
-    public void addEdge(Vertex v, Vertex w) {
-        v.addNeighbour(w);
-        w.addNeighbour(v);
-    }
-}
 
 public class Main {
-
-    @Test
-    public void testNull() {
-        Graph g = new Graph();
-        Graph.Vertex v = null;
-        assertEquals(0, countVertices(g, v));
-        g = null;
-        v = new Graph.Vertex(1);
-        assertEquals(0, countVertices(g, v));
+    @Test(timeout = 100)
+    public void testEmpty() {
+        assertEquals(new ArrayList<>(), radixSortLSD(new ArrayList<>()));
     }
 
-    @Test
-    public void testExample() {
-        Graph g = new Graph();
-        Graph.Vertex v = new Graph.Vertex(1);
-        Graph.Vertex w = new Graph.Vertex(2);
-        Graph.Vertex x = new Graph.Vertex(3);
-        Graph.Vertex y = new Graph.Vertex(4);
-        g.addVertex(v);
-        g.addVertex(w);
-        g.addVertex(x);
-        g.addVertex(y);
-        g.addEdge(v, w);
-        g.addEdge(w, y);
-        assertEquals(3, countVertices(g, v));
-        assertEquals(3, countVertices(g, w));
-        assertEquals(3, countVertices(g, y));
-        assertEquals(1, countVertices(g, x));
+    @Test(timeout = 100)
+    public void testReversed() {
+        List<String> data = asList("0687654321", "0612301345", "0612300123", "0612345678");
+        List<String> data2 = asList("0612300123", "0612301345", "0612345678", "0687654321");
+        assertEquals(data2, radixSortLSD(data));
     }
 
     /**
-     * Counts the number of vertices in the same connected component as v in graph g.
-     * This is done using breadth first search.
+     * Sorts a list of Dutch mobile phone numbers using LSD radix sort.
      *
-     * Returns 0 if the graph or vertex is null
-     *
-     * @param g
-     *     The graph to count vertices in.
-     * @param v
-     *     The vertex to start counting at.
-     * @return the number of vertices in the same connected component.
+     * @param phoneNumbers
+     *     The list of phone numbers to sort.
+     * @return The sorted list of phone numbers.
+     * @throws NullPointerException
+     *     If `phoneNumbers` equals `null`.
      */
-    public static int countVertices(Graph g, Graph.Vertex v) {
-        if (g == null || v == null){
-            return 0;
+    static List<String> radixSortLSD(List<String> phoneNumbers) {
+        if(phoneNumbers == null){
+            throw new NullPointerException();
         }
 
-        Queue<Graph.Vertex> queue = new LinkedList<>();
-        List<Graph.Vertex> knownVertices = new LinkedList<>();
-        int count = 1;
-        knownVertices.add(v);
-        queue.add(v);
+        List<String> result = phoneNumbers;
+        for (int i = 9; i > 1; i--){
+            result = radixSortLSDHelper(result, i);
+        }
 
-        while (!queue.isEmpty()){
-            Graph.Vertex select = queue.remove();
-            Iterator<Graph.Vertex> graphIter = g.getNeighbours(select).iterator();
-            while (graphIter.hasNext()){
-                Graph.Vertex check = graphIter.next();
-                if (!knownVertices.contains(check)){
-                    count++;
-                    knownVertices.add(check);
-                    queue.add(check);
-                }
+        return result;
+    }
+
+    static List<String> radixSortLSDHelper(List<String> phoneNumbers, int pos) {
+        Queue<String>[] buckets = new LinkedList[10];
+        for (int i = 0; i < 10; i++) {
+            buckets[i] = new LinkedList<String>();
+        }
+
+        List<String> result = new ArrayList<>(phoneNumbers.size());
+
+        for (String phoneNumber : phoneNumbers){
+            buckets[(Character.getNumericValue(phoneNumber.charAt(pos)))].add(phoneNumber);
+        }
+
+        for (int i = 0; i < 10; i++) {
+            while (!buckets[i].isEmpty()){
+                result.add(buckets[i].poll());
             }
         }
 
-        return count;
+        return result;
 
     }
-
-
 
 }
