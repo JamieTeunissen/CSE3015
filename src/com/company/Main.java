@@ -6,197 +6,418 @@ import org.junit.*;
 
 public class Main {
 
-    static class BinaryTree {
 
-        private int value;
+    /**
+     * Container class used to store a Vertex and an int.
+     */
+    static class VertexNumPair {
 
-        private BinaryTree left, right;
+        private Vertex vertex;
 
-        private boolean isRed;
+        private int num;
 
-        /**
-         * Simple constructor.
-         *
-         * @param value Value for this tree set as value.
-         * @param isRed True if this node is red, false otherwise.
-         */
-        public BinaryTree(int value, boolean isRed) {
-            this.value = value;
-            this.isRed = isRed;
+        public VertexNumPair(Vertex vertex, int num) {
+            this.vertex = vertex;
+            this.num = num;
         }
 
-        /**
-         * Extended constructor.
-         *
-         * @param value to set as value.
-         * @param left to set as left child.
-         * @param right to set as right child.
-         */
-        public BinaryTree(int value, boolean isRed, BinaryTree left, BinaryTree right) {
-            this(value, isRed);
-            setLeft(left);
-            setRight(right);
+        public Vertex getVertex() {
+            return vertex;
         }
 
-        /**
-         * @return the value of this tree.
-         */
-        public int getValue() {
-            return value;
-        }
-
-        /**
-         * @param value the new value of this tree.
-         */
-        public void setValue(int value) {
-            this.value = value;
-        }
-
-        /**
-         * @return the left child.
-         */
-        public BinaryTree getLeft() {
-            return left;
-        }
-
-        /**
-         * @return the right child.
-         */
-        public BinaryTree getRight() {
-            return right;
-        }
-
-        /**
-         * @return true if this node is red, false otherwise.
-         */
-        public boolean isRed() {
-            return isRed;
-        }
-
-        /**
-         * @return true if this node is black, false otherwise.
-         */
-        public boolean isBlack() {
-            return !isRed;
-        }
-
-        /**
-         * @return True if the tree has a left child, false otherwise.
-         */
-        public boolean hasLeft() {
-            return left != null;
-        }
-
-        /**
-         * @return True if the tree has a right child, false otherwise.
-         */
-        public boolean hasRight() {
-            return right != null;
-        }
-
-        /**
-         * @param left Left subtree to set.
-         */
-        public void setLeft(BinaryTree left) {
-            this.left = left;
-        }
-
-        /**
-         * @param right Right subtree to set.
-         */
-        public void setRight(BinaryTree right) {
-            this.right = right;
-        }
-
-        /**
-         * @param red True if the new color is red, false otherwise.
-         */
-        public void setRed(boolean red) {
-            isRed = red;
+        public int getNum() {
+            return num;
         }
     }
 
+    class Vertex implements Comparable<Vertex> {
 
-    public static void main(String[] args) {
-        BinaryTree tree = new BinaryTree(4, false);
-        assertTrue(isRedBlackTree(tree));
-        tree.setLeft(new BinaryTree(2, true));
-        tree.setRight(new BinaryTree(6, false));
-//        assertTrue(isRedBlackTree(tree));
-        tree.getLeft().setLeft(new BinaryTree(1, false));
-        tree.setRight(null);
-        assertTrue(isRedBlackTree(tree));
+        private int id;
+
+        private Set<VertexNumPair> neighbours;
+
+        public Vertex(int id) {
+            this.id = id;
+            neighbours = new HashSet<>();
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public void addNeighbour(Vertex v, int weight) {
+            neighbours.add(new VertexNumPair(v, weight));
+        }
+
+        @Override
+        public String toString() {
+            return "<vertex: " + id + ">";
+        }
+
+        public Collection<VertexNumPair> getNeighbours() {
+            return new ArrayList<>(this.neighbours);
+        }
+
+        @Override
+        public int compareTo(Vertex o) {
+            return this.getId() - o.getId();
+        }
+
+        @Override
+        public int hashCode() {
+            return this.getId();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof Vertex && ((Vertex) o).getId() == this.getId();
+        }
+    }
+
+    class Graph {
+
+        private Map<Integer, Vertex> vertices = new HashMap<>();
+
+        /**
+         * Creates a new graph with n vertices.
+         *
+         * @param n Amount of vertices in the graph.
+         */
+        public Graph(int n) {
+            for (int i = 0; i < n; i++) vertices.put(i, new Vertex(i));
+        }
+
+        /**
+         * Returns the vertex with the given ID.
+         *
+         * @param id The ID for the vertex to get.
+         * @return The vertex with the given ID.
+         * @throws IllegalArgumentException if no vertex with the given ID is in the graph.
+         */
+        public Vertex getVertex(int id) throws IllegalArgumentException {
+            if (!vertices.containsKey(id))
+                throw new IllegalArgumentException("Vertex not in graph");
+            return vertices.get(id);
+        }
+
+        public Collection<Vertex> getAllVertices() {
+            return new ArrayList<>(this.vertices.values());
+        }
+
+        /**
+         * Returns all neighbours of the given vertex sorted by their ID.
+         *
+         * @param v The vertex to get the neighbours from.
+         * @return A sorted list of all neighbouring vertices.
+         */
+        public List<VertexNumPair> getNeighbours(Vertex v) {
+            List<VertexNumPair> neighbours = new ArrayList<>(v.getNeighbours());
+            neighbours.sort(Comparator.comparingInt(a -> a.getVertex().getId()));
+            return neighbours;
+        }
+
+        /**
+         * Adds an edge between vertex u and v with the given weight.
+         *
+         * @param u First vertex.
+         * @param v Second vertex.
+         * @param weight Weight of the edge between a and b.
+         */
+        public void addEdge(Vertex u, Vertex v, int weight) {
+            u.addNeighbour(v, weight);
+            v.addNeighbour(u, weight);
+        }
+
+        /**
+         * Adds an edge between the vertices with IDs u and v with the given weight.
+         *
+         * @param u ID of the first vertex.
+         * @param v ID of the second vertex.
+         * @param weight Weight of the edge between a and b.
+         * @throws IllegalArgumentException if no vertex with the given ID is in the graph.
+         */
+        public void addEdge(int u, int v, int weight) throws IllegalArgumentException {
+            addEdge(getVertex(u), getVertex(v), weight);
+        }
+    }
+
+    static class AdaptablePQ {
+
+        private static class PQEntry implements Comparable<PQEntry> {
+
+            private int key;
+
+            private Vertex value;
+
+            private int index;
+
+            public PQEntry(int key, Vertex value, int index) {
+                this.key = key;
+                this.value = value;
+                this.index = index;
+            }
+
+            protected int getKey() {
+                return key;
+            }
+
+            protected void setKey(int key) {
+                this.key = key;
+            }
+
+            protected Vertex getValue() {
+                return value;
+            }
+
+            protected int getIndex() {
+                return index;
+            }
+
+            protected void setIndex(int index) {
+                this.index = index;
+            }
+
+            @Override
+            public int compareTo(PQEntry o) {
+                return Integer.compare(this.getKey(), o.getKey());
+            }
+        }
+
+        private ArrayList<PQEntry> heap = new ArrayList<>();
+
+        private Map<Vertex, PQEntry> entries = new HashMap<>();
+
+        private int parent(int j) {
+            return (j - 1) / 2;
+        }
+
+        private int left(int j) {
+            return 2 * j + 1;
+        }
+
+        private int right(int j) {
+            return 2 * j + 2;
+        }
+
+        private boolean hasLeft(int j) {
+            return left(j) < heap.size();
+        }
+
+        private boolean hasRight(int j) {
+            return right(j) < heap.size();
+        }
+
+        /**
+         * Exchanges the entries at indices i and j of the array list.
+         *
+         * @param i First index to swap.
+         * @param j Second index to swap.
+         */
+        private void swap(int i, int j) {
+            PQEntry temp = heap.get(i);
+            heap.set(i, heap.get(j));
+            heap.set(j, temp);
+            heap.get(i).setIndex(i);
+            heap.get(j).setIndex(j);
+        }
+
+        /**
+         * Moves the entry at index j higher, if necessary, to restore the heap property.
+         *
+         * @param j Index to start from.
+         */
+        private void upheap(int j) {
+            while (j > 0) {
+                int p = parent(j);
+                if (heap.get(j).compareTo(heap.get(p)) >= 0)
+                    break;
+                swap(j, p);
+                j = p;
+            }
+        }
+
+        /**
+         * Moves the entry at index j lower, if necessary, to restore the heap property.
+         *
+         * @param j Index to start from.
+         */
+        private void downheap(int j) {
+            while (hasLeft(j)) {
+                int leftIndex = left(j);
+                int smallChildIndex = leftIndex;
+                if (hasRight(j)) {
+                    int rightIndex = right(j);
+                    if (heap.get(leftIndex).compareTo(heap.get(rightIndex)) > 0)
+                        smallChildIndex = rightIndex;
+                }
+                if (heap.get(smallChildIndex).compareTo(heap.get(j)) >= 0)
+                    break;
+                swap(j, smallChildIndex);
+                j = smallChildIndex;
+            }
+        }
+
+        /**
+         * Restores the heap property by moving the entry at index j upward/downward.
+         *
+         * @param j Index to start restoring the heap from.
+         */
+        private void bubble(int j) {
+            if (j > 0 && heap.get(j).compareTo(heap.get(parent(j))) < 0)
+                upheap(j);
+            else
+                downheap(j);
+        }
+
+        /**
+         * Adds a new vertex to the PriorityQueue with the given key.
+         *
+         * @param vertex Vertex to add to the queue.
+         * @param key Key for the vertex in the queue.
+         */
+        private void insert(Vertex vertex, int key) {
+            PQEntry newest = new PQEntry(key, vertex, heap.size());
+            heap.add(newest);
+            upheap(heap.size() - 1);
+            entries.put(vertex, newest);
+        }
+
+        // ------- PUBLIC METHODS -----------------------------------------------------
+        /**
+         * Returns the number of items in the priority queue.
+         *
+         * @return number of items.
+         */
+        public int size() {
+            return heap.size();
+        }
+
+        /**
+         * Replaces the key of a given vertex and reorders it in the PriorityQueue.
+         * If the key was not in the PriorityQueue yet, it is added.
+         *
+         * @param vertex Vertex to change the key from.
+         * @param key New key for the given vertex.
+         */
+        public void insertOrReplace(Vertex vertex, int key) {
+            if (!entries.containsKey(vertex)) {
+                this.insert(vertex, key);
+            } else {
+                PQEntry entry = entries.get(vertex);
+                entry.setKey(key);
+                bubble(entry.getIndex());
+            }
+        }
+
+        /**
+         * Removes and returns an entry with minimal key.
+         *
+         * @return the removed entry's Vertex and its key (or null if the PQ is empty).
+         */
+        public VertexNumPair removeMin() {
+            if (isEmpty())
+                return null;
+            PQEntry entry = heap.get(0);
+            swap(0, heap.size() - 1);
+            heap.remove(heap.size() - 1);
+            downheap(0);
+            entries.remove(entry.getValue());
+            return new VertexNumPair(entry.getValue(), entry.getKey());
+        }
+
+        /**
+         * Returns whether the PriorityQueue is empty or not.
+         *
+         * @return True when the PQ is empty, false otherwise.
+         */
+        public boolean isEmpty() {
+            return heap.isEmpty();
+        }
+    }
+
+    @Test
+    public void testUnweighted() {
+        Graph g = new Graph(5);
+        g.addEdge(0, 1, 1);
+        g.addEdge(0, 2, 1);
+        g.addEdge(2, 4, 1);
+        g.addEdge(0, 3, 1);
+        g.addEdge(3, 4, 1);
+        // Path from 0 to 4 should be 2
+        assertEquals(2, shortestPath(g, g.getVertex(0), g.getVertex(4)));
+        // Path from 1 to 2 should be 2
+        assertEquals(2, shortestPath(g, g.getVertex(1), g.getVertex(2)));
+        // Path from 3 to 4 should be 1
+        assertEquals(1, shortestPath(g, g.getVertex(3), g.getVertex(4)));
+        // Path from 3 to 1 should be 2
+        assertEquals(2, shortestPath(g, g.getVertex(3), g.getVertex(1)));
     }
 
     /**
-     * Checks whether the given BinaryTree is a Red Black Tree.
-     * @param tree BinaryTree to check.
-     * @return True if the given tree is a Red Black Tree, false otherwise.
+     * Tests the following graph:
+     * 0 - 1 - 3
+     * |    \  |
+     * |     \ |
+     * 2  ---  4
+     *
+     * The weights are as follows:
+     * 0 - 1: 1
+     * 1 - 3: 6
+     * 3 - 4: 4
+     * 1 - 4: 1
+     * 0 - 2: 7
+     * 2 - 4: 4
      */
-    public static boolean isRedBlackTree(BinaryTree tree) {
-        if(tree.isRed()){
-            return false;
-        }
-
-        if(!(isBST(tree.getLeft(), 0, tree.getValue()-1) && isBST(tree.getRight(), tree.getValue()+1, 100000))){
-            return false;
-        }
-
-        if(!((checkBlackDepth(tree.getLeft()) == checkBlackDepth(tree.getRight())) && (checkBlackDepth(tree.getLeft()) >= 0 && checkBlackDepth(tree.getRight()) >= 0))){
-            return false;
-        }
-
-        if(!checkLeafBlack(tree)){
-            return false;
-        }
-
-        return true;
+    @Test
+    public void testWeighted() {
+        Graph g = new Graph(5);
+        g.addEdge(0, 1, 1);
+        g.addEdge(1, 3, 6);
+        g.addEdge(3, 4, 4);
+        g.addEdge(1, 4, 1);
+        g.addEdge(0, 2, 7);
+        g.addEdge(2, 4, 4);
+        // Path is 0-1-4
+        assertEquals(2, shortestPath(g, g.getVertex(0), g.getVertex(4)));
+        // Path is 0-1-4-3
+        assertEquals(6, shortestPath(g, g.getVertex(0), g.getVertex(3)));
+        // Path is 2-4
+        assertEquals(4, shortestPath(g, g.getVertex(2), g.getVertex(4)));
+        // Path is 2-4-1-0
+        assertEquals(6, shortestPath(g, g.getVertex(2), g.getVertex(0)));
     }
 
-    public static boolean isBST(BinaryTree tree, int min, int max){
-        if(tree == null){
-            return true;
-        }
-        if(tree.getValue() < min || tree.getValue() > max){
-            return false;
-        }
-        return (isBST(tree.getLeft(), min, tree.getValue()-1) && isBST(tree.getRight(), tree.getValue()+1, max));
-    }
-
-    public static int checkBlackDepth(BinaryTree tree){
-        if(tree == null){
-            return 1;
-        }
-        int b = 0;
-        if(tree.isBlack()){b=1;}
-
-        int left = b + checkBlackDepth(tree.getLeft());
-        int right = b + checkBlackDepth(tree.getRight());
-
-        if (left == -1 || right == -1 || left != right){
-            return -1;
-        }
-
-        return left;
+    public static void main(String[] args) {
 
     }
 
-    public static boolean checkLeafBlack(BinaryTree tree){
-        if(tree.getLeft() == null && tree.getRight() == null){
-            if(tree.isRed()){
-                return false;
+    /**
+     * Returns the length of the shortest path between vertex a and b in graph g.
+     * @param g Graph to consider.
+     * @param a Vertex to start from.
+     * @param b Vertex to go to.
+     * @return The length of the shortest path between a and b, or -1 if no such path exists.
+     */
+    public static int shortestPath(Graph g, Vertex a, Vertex b) {
+        AdaptablePQ aPQ = new AdaptablePQ();
+        int[] distances = new int[g.getAllVertices().size()];
+        Arrays.fill(distances, -1);
+        distances[a.getId()] = 0;
+        aPQ.insertOrReplace(a, 0);
+
+        while (!aPQ.isEmpty()){
+            VertexNumPair select  = aPQ.removeMin();
+            Iterator<VertexNumPair> iterator = g.getNeighbours(select.getVertex()).iterator();
+            while(iterator.hasNext()){
+                VertexNumPair check = iterator.next();
+                if (distances[check.getVertex().getId()] == -1 || (distances[check.getVertex().getId()] > distances[select.getVertex().getId()] + check.getNum())){
+                    distances[check.getVertex().getId()] = check.getNum() + distances[select.getVertex().getId()];
+                    aPQ.insertOrReplace(check.getVertex(), distances[select.getVertex().getId()] + check.getNum());
+                }
             }
-            return true;
-        }else if(tree.getLeft() == null){
-            return checkLeafBlack(tree.getRight());
-        }else if(tree.getRight() == null){
-            return checkLeafBlack(tree.getLeft());
         }
 
-        return (checkLeafBlack(tree.getRight()) && checkLeafBlack(tree.getLeft()));
+        return distances[b.getId()];
     }
-
-
-
 
 }
